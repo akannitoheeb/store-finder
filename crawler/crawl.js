@@ -172,13 +172,27 @@ async function existingStores() {
   return map;
 }
 
+// Domains queued by discover.js (ignored quietly if that table does not exist yet)
+async function pendingDiscovered() {
+  const r = await fetch(`${SB_URL}/rest/v1/discovered_domains?select=domain&status=eq.pending&order=found_at.asc&limit=${MAX_PER_RUN}`, { headers: sbHeaders });
+  if (!r.ok) return [];
+  return (await r.json()).map((x) => x.domain);
+}
+async function markDiscovered(domain, status) {
+  await fetch(`${SB_URL}/rest/v1/discovered_domains?domain=eq.${encodeURIComponent(domain)}`, {
+    method: 'PATCH', headers: sbHeaders, body: JSON.stringify({ status }),
+  });
+}
+
 (async () => {
   const file = fs.readFileSync(path.join(__dirname, 'domains.txt'), 'utf8');
   const domains = [...new Set(file.split('\n').filter((l) => l.trim() && !l.trim().startsWith('#')).map(normalize))];
   const existing = await existingStores();
   const cutoff = Date.now() - RECRAWL_DAYS * 86400000;
   const queue = domains.filter((d) => !existing.has(d) || new Date(existing.get(d)).getTime() < cutoff).slice(0, MAX_PER_RUN);
-  console.log(`${domains.length} domains listed, ${queue.length} to crawl this run.`);
+  const pending = new Set(await pendingDiscovered());
+  for (const d of pending) if (queue.length < MAX_PER_RUN && !queue.includes(d)) queue.push(d);
+  console.log(`${domains.length} domains listed, ${pending.size} discovered, ${queue.length} to crawl this run.`);
 
   let saved = 0, skipped = 0, failed = 0;
   async function worker() {
@@ -188,7 +202,11 @@ async function existingStores() {
         const res = await crawl(domain, !existing.has(domain));
         if (res.skip) { skipped++; console.log(`skip  ${domain}: ${res.skip}`); }
         else { await save(res.row); saved++; console.log(`saved ${domain} (${res.row.platform}, ${(res.row.emails || []).length} emails)`); }
-      } catch (e) { failed++; console.log(`error ${domain}: ${e.message.slice(0, 120)}`); }
+        if (pending.has(domain)) await markDiscovered(domain, res.skip ? 'skipped' : 'done');
+      } catch (e) {
+        failed++; console.log(`error ${domain}: ${e.message.slice(0, 120)}`);
+        if (pending.has(domain)) await markDiscovered(domain, 'error');
+      }
       await sleep(1000);
     }
   }
