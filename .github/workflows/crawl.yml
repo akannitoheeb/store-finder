@@ -14,7 +14,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: node crawler/crawl.js
+      - name: Find new stores
+        run: node crawler/discover.js
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
+          DISCOVER_MAX_SEARCHES: 10
+      - name: Crawl stores
+        run: node crawler/crawl.js
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
