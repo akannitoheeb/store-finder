@@ -1,0 +1,5 @@
+# One store per line. Paste domains or full links, the crawler cleans them.
+# Lines starting with # are ignored.
+# Replace the examples below with real stores you found:
+# example-store-one.com
+# https://www.example-store-two.com/collections/all
