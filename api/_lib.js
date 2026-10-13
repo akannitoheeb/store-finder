@@ -13,7 +13,11 @@ const clean = (v) => String(v || '').replace(/[*,()]/g, '').trim();
 function buildFilters(q) {
   const p = new URLSearchParams();
   if (q.platform) p.set('platform', 'eq.' + clean(q.platform));
-  if (q.country) p.set('country', 'ilike.*' + clean(q.country) + '*');
+  if (q.country) {
+    const aliases = { uk: 'United Kingdom', gb: 'United Kingdom', us: 'United States', usa: 'United States', uae: 'United Arab Emirates' };
+    const c = clean(q.country);
+    p.set('country', 'ilike.*' + (aliases[c.toLowerCase()] || c) + '*');
+  }
   if (q.category) p.set('category', 'ilike.*' + clean(q.category) + '*');
   if (q.q) p.set('domain', 'ilike.*' + clean(q.q) + '*');
   if (q.has_email === '1') p.set('emails', 'neq.{}');
