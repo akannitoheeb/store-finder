@@ -1,0 +1,15 @@
+# One search per line:  query | country code (2 letters, optional, default us)
+# Each run picks a few of these at random and a random results page, so it keeps finding new stores.
+# Edit these to match the kind of stores you want to reach.
+"powered by Shopify" women's boutique clothing | us
+"powered by Shopify" women's boutique clothing | uk
+"powered by Shopify" skincare brand | us
+"powered by Shopify" skincare brand | ca
+"powered by Shopify" handmade jewelry | us
+"powered by Shopify" vintage clothing | uk
+"powered by Shopify" streetwear | au
+inurl:/collections/ candles gifts | us
+inurl:/collections/ pet accessories | us
+inurl:/collections/ home decor | uk
+inurl:/collections/ activewear | ca
+inurl:/collections/ baby clothes | au
