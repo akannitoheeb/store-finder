@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Store Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eef2f4; --panel: #ffffff; --ink: #14202b; --muted: #5b6b78;
+    --line: #d5dde3; --accent: #0f766e; --accent-ink: #ffffff; --warn: #b42318;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 "IBM Plex Sans", system-ui, sans-serif; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 16px 24px; background: var(--ink); color: #fff; }
+  header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+  header input { padding: 8px 10px; border-radius: 6px; border: 1px solid #3a4a58; background: #1f2f3d; color: #fff; width: 200px; }
+  main { display: grid; grid-template-columns: 260px 1fr; gap: 20px; padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+  aside, .results { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+  aside h2 { margin: 0 0 12px; font-size: 16px; }
+  label { display: block; margin: 12px 0 4px; font-weight: 500; font-size: 14px; }
+  input[type=text], select { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font: inherit; background: #fff; }
+  .check { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-weight: 400; }
+  button { font: inherit; cursor: pointer; border-radius: 6px; padding: 8px 14px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); font-weight: 500; }
+  button.ghost { background: #fff; color: var(--accent); }
+  button:disabled { opacity: .5; cursor: default; }
+  :focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+  .actions { display: flex; gap: 8px; margin-top: 16px; }
+  .bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 760px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 14px; }
+  th { color: var(--muted); font-weight: 500; }
+  td a { color: var(--accent); text-decoration: none; font-weight: 500; }
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 99px; background: #e2f1ef; color: #0b5a54; font-size: 12px; margin-right: 4px; }
+  .muted { color: var(--muted); }
+  .msg { padding: 24px 8px; color: var(--muted); }
+  .msg.error { color: var(--warn); }
+  .pager { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 12px; }
+  @media (max-width: 800px) { main { grid-template-columns: 1fr; padding: 12px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Store Finder</h1>
+  <input id="key" type="password" placeholder="Access key" aria-label="Access key">
+</header>
+
+<main>
+  <aside>
+    <h2>Filters</h2>
+    <label for="q">Domain contains</label>
+    <input type="text" id="q" placeholder="e.g. beauty">
+    <label for="platform">Platform</label>
+    <select id="platform">
+      <option value="">Any</option><option>Shopify</option><option>WooCommerce</option>
+      <option>Wix</option><option>PrestaShop</option><option>BigCommerce</option><option>Magento</option>
+    </select>
+    <label for="country">Country</label>
+    <input type="text" id="country" placeholder="e.g. United States">
+    <label for="category">Category</label>
+    <input type="text" id="category" placeholder="e.g. Beauty">
+    <label for="klaviyo">Klaviyo</label>
+    <select id="klaviyo">
+      <option value="">Any</option><option value="1">Uses Klaviyo</option><option value="0">Does not use Klaviyo</option>
+    </select>
+    <label class="check"><input type="checkbox" id="has_email"> Has email</label>
+    <label class="check"><input type="checkbox" id="has_phone"> Has phone</label>
+    <label class="check"><input type="checkbox" id="has_instagram"> Has Instagram</label>
+    <label class="check"><input type="checkbox" id="ads"> Running Meta ads</label>
+    <div class="actions">
+      <button id="search">Search</button>
+      <button id="reset" class="ghost">Reset</button>
+    </div>
+  </aside>
+
+  <section class="results">
+    <div class="bar">
+      <strong id="count">No search yet</strong>
+      <button id="export" class="ghost" disabled>Export CSV</button>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Store</th><th>Platform</th><th>Country</th><th>Category</th><th>Contact</th><th>Signals</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div id="msg" class="msg">Enter your access key, then press Search.</div>
+    <div class="pager">
+      <button id="prev" class="ghost" disabled>Previous</button>
+      <span id="page" class="muted"></span>
+      <button id="next" class="ghost" disabled>Next</button>
+    </div>
+  </section>
+</main>
+
+<script>
+// Change this to your site-audit address. The domain is added to the end.
+const AUDIT_URL = 'https://site-audit-rose.vercel.app/?url=';
+
+const $ = (id) => document.getElementById(id);
+const keyInput = $('key');
+let page = 1, lastPages = 1;
+
+try { keyInput.value = localStorage.getItem('sf_key') || ''; } catch (e) {}
+keyInput.addEventListener('change', () => { try { localStorage.setItem('sf_key', keyInput.value); } catch (e) {} });
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function params() {
+  const p = new URLSearchParams();
+  ['q', 'platform', 'country', 'category', 'klaviyo'].forEach((id) => { if ($(id).value.trim()) p.set(id, $(id).value.trim()); });
+  ['has_email', 'has_phone', 'has_instagram', 'ads'].forEach((id) => { if ($(id).checked) p.set(id, '1'); });
+  return p;
+}
+
+function setMsg(text, isError) {
+  $('msg').textContent = text;
+  $('msg').className = 'msg' + (isError ? ' error' : '');
+  $('msg').style.display = text ? 'block' : 'none';
+}
+
+async function run(goToPage) {
+  page = goToPage;
+  const p = params();
+  p.set('page', page);
+  setMsg('Searching...');
+  $('rows').innerHTML = '';
+  try {
+    const r = await fetch('/api/search?' + p, { headers: { 'x-access-key': keyInput.value } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Search failed.');
+    render(data);
+  } catch (e) {
+    setMsg(e.message, true);
+  }
+}
+
+function render({ rows, count, limit }) {
+  lastPages = Math.max(1, Math.ceil(count / limit));
+  $('count').textContent = count.toLocaleString() + ' stores found';
+  $('export').disabled = count === 0;
+  $('page').textContent = 'Page ' + page + ' of ' + lastPages;
+  $('prev').disabled = page <= 1;
+  $('next').disabled = page >= lastPages;
+  if (!rows.length) { setMsg('No stores match these filters. Remove a filter or add more stores.'); return; }
+  setMsg('');
+  $('rows').innerHTML = rows.map((s) => {
+    const contact = [
+      ...(s.emails || []).slice(0, 2).map(esc),
+      ...(s.phones || []).slice(0, 1).map(esc),
+      s.instagram ? '<a href="' + esc(s.instagram) + '" target="_blank" rel="noopener">Instagram</a>' : '',
+    ].filter(Boolean).join('<br>') || '<span class="muted">None found</span>';
+    const signals = (s.uses_klaviyo ? '<span class="tag">Klaviyo</span>' : '') + (s.running_meta_ads ? '<span class="tag">Meta ads</span>' : '');
+    return '<tr><td><a href="https://' + esc(s.domain) + '" target="_blank" rel="noopener">' + esc(s.domain) + '</a></td>'
+      + '<td>' + esc(s.platform) + '</td><td>' + esc(s.country) + '</td><td>' + esc(s.category) + '</td>'
+      + '<td>' + contact + '</td><td>' + signals + '</td>'
+      + '<td><a href="' + AUDIT_URL + encodeURIComponent(s.domain) + '" target="_blank" rel="noopener">Audit</a></td></tr>';
+  }).join('');
+}
+
+async function exportCsv() {
+  $('export').disabled = true;
+  try {
+    const r = await fetch('/api/export?' + params(), { headers: { 'x-access-key': keyInput.value } });
+    if (!r.ok) throw new Error((await r.json()).error || 'Export failed.');
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'stores.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (e) {
+    setMsg(e.message, true);
+  }
+  $('export').disabled = false;
+}
+
+$('search').onclick = () => run(1);
+$('prev').onclick = () => run(page - 1);
+$('next').onclick = () => run(page + 1);
+$('export').onclick = exportCsv;
+$('reset').onclick = () => {
+  document.querySelectorAll('aside input[type=text], aside select').forEach((el) => (el.value = ''));
+  document.querySelectorAll('aside input[type=checkbox]').forEach((el) => (el.checked = false));
+};
+document.querySelectorAll('aside input[type=text]').forEach((el) => el.addEventListener('keydown', (e) => { if (e.key === 'Enter') run(1); }));
+</script>
+</body>
+</html>
