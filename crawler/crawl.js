@@ -128,6 +128,7 @@ async function crawl(domain, isNew) {
   const free = found.filter((e) => /@(gmail|yahoo|outlook|hotmail|icloud|proton|protonmail)\./.test(e));
   const emails = own.length ? own : free;
   if (emails.length) row.emails = emails;
+  else if (found.length) row.emails = []; // only vendor/junk emails found: clear any old ones
   const phones = findPhones(all); if (phones.length) row.phones = phones;
   Object.assign(row, findSocials(all));
   if (isNew) row.source = 'crawler';
