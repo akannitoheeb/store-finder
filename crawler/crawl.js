@@ -100,7 +100,7 @@ function guessCountry(domain, html) {
 async function crawl(domain, isNew) {
   if (!(await allowed(domain))) return { skip: 'blocked by robots.txt' };
   const home = await get(`https://${domain}`);
-  if (!home) return { skip: 'site did not load' };
+  if (!home) return { skip: 'site did not load', dead: true };
   const platform = detectPlatform(home);
   if (!platform) return { skip: 'not a recognised store platform' };
 
@@ -116,6 +116,7 @@ async function crawl(domain, isNew) {
   const row = {
     domain, platform,
     uses_klaviyo: /klaviyo\.com/i.test(all),
+    is_active: true,
     last_crawled: new Date().toISOString(),
   };
   const country = guessCountry(domain, home);
@@ -149,6 +150,13 @@ async function crawl(domain, isNew) {
     } catch (e) { /* products.json not public, ignore */ }
   }
   return { row };
+}
+
+// A store that used to load but no longer does is marked inactive (set back to active on the next good crawl)
+async function markInactive(domain) {
+  await fetch(`${SB_URL}/rest/v1/stores?domain=eq.${encodeURIComponent(domain)}`, {
+    method: 'PATCH', headers: sbHeaders, body: JSON.stringify({ is_active: false, last_crawled: new Date().toISOString() }),
+  });
 }
 
 async function save(row) {
@@ -200,7 +208,7 @@ async function markDiscovered(domain, status) {
       const domain = queue.shift();
       try {
         const res = await crawl(domain, !existing.has(domain));
-        if (res.skip) { skipped++; console.log(`skip  ${domain}: ${res.skip}`); }
+        if (res.skip) { skipped++; console.log(`skip  ${domain}: ${res.skip}`); if (res.dead && existing.has(domain)) await markInactive(domain); }
         else { await save(res.row); saved++; console.log(`saved ${domain} (${res.row.platform}, ${(res.row.emails || []).length} emails)`); }
         if (pending.has(domain)) await markDiscovered(domain, res.skip ? 'skipped' : 'done');
       } catch (e) {
