@@ -58,9 +58,9 @@
       <option>Wix</option><option>PrestaShop</option><option>BigCommerce</option><option>Magento</option>
     </select>
     <label for="country">Country</label>
-    <input type="text" id="country" placeholder="e.g. United States">
+    <select id="country"><option value="">All countries</option></select>
     <label for="category">Category</label>
-    <input type="text" id="category" placeholder="e.g. Beauty">
+    <select id="category"><option value="">All categories</option></select>
     <label for="klaviyo">Klaviyo</label>
     <select id="klaviyo">
       <option value="">Any</option><option value="1">Uses Klaviyo</option><option value="0">Does not use Klaviyo</option>
@@ -69,6 +69,7 @@
     <label class="check"><input type="checkbox" id="has_phone"> Has phone</label>
     <label class="check"><input type="checkbox" id="has_instagram"> Has Instagram</label>
     <label class="check"><input type="checkbox" id="ads"> Running Meta ads</label>
+    <label class="check"><input type="checkbox" id="active"> Active stores only</label>
     <div class="actions">
       <button id="search">Search</button>
       <button id="reset" class="ghost">Reset</button>
@@ -104,14 +105,32 @@ const keyInput = $('key');
 let page = 1, lastPages = 1;
 
 try { keyInput.value = localStorage.getItem('sf_key') || ''; } catch (e) {}
-keyInput.addEventListener('change', () => { try { localStorage.setItem('sf_key', keyInput.value); } catch (e) {} });
+keyInput.addEventListener('change', () => { try { localStorage.setItem('sf_key', keyInput.value); } catch (e) {} loadFilters(); });
+
+// Fill the Country and Category dropdowns with what actually exists in the data
+function fill(id, items, label) {
+  const el = $(id), current = el.value;
+  el.innerHTML = '<option value="">' + label + '</option>'
+    + items.map((i) => '<option value="' + esc(i.v) + '">' + esc(i.v) + ' (' + i.n + ')</option>').join('');
+  el.value = current;
+}
+async function loadFilters() {
+  if (!keyInput.value) return;
+  try {
+    const r = await fetch('/api/filters', { headers: { 'x-access-key': keyInput.value } });
+    if (!r.ok) return;
+    const d = await r.json();
+    fill('country', d.countries, 'All countries');
+    fill('category', d.categories, 'All categories');
+  } catch (e) { /* dropdowns stay empty, search still works */ }
+}
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function params() {
   const p = new URLSearchParams();
   ['q', 'platform', 'country', 'category', 'klaviyo'].forEach((id) => { if ($(id).value.trim()) p.set(id, $(id).value.trim()); });
-  ['has_email', 'has_phone', 'has_instagram', 'ads'].forEach((id) => { if ($(id).checked) p.set(id, '1'); });
+  ['has_email', 'has_phone', 'has_instagram', 'ads', 'active'].forEach((id) => { if ($(id).checked) p.set(id, '1'); });
   return p;
 }
 
@@ -132,6 +151,7 @@ async function run(goToPage) {
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Search failed.');
     render(data);
+    if ($('country').options.length < 2) loadFilters();
   } catch (e) {
     setMsg(e.message, true);
   }
@@ -185,6 +205,7 @@ $('reset').onclick = () => {
   document.querySelectorAll('aside input[type=text], aside select').forEach((el) => (el.value = ''));
   document.querySelectorAll('aside input[type=checkbox]').forEach((el) => (el.checked = false));
 };
+loadFilters();
 document.querySelectorAll('aside input[type=text]').forEach((el) => el.addEventListener('keydown', (e) => { if (e.key === 'Enter') run(1); }));
 </script>
 </body>
