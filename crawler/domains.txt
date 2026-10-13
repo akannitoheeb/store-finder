@@ -2,4 +2,33 @@
 # Lines starting with # are ignored.
 # Replace the examples below with real stores you found:
 # example-store-one.com
-# https://www.example-store-two.com/collections/all
+skateconnection.com.au
+spearmintlove.com
+linenandcloth.com
+tricer.com
+rebekahprice.ca
+urbansales.co.nz
+bibisquishy.com
+mecamoda.it
+gostockup.com
+junkbrands.com
+toa.st
+clarkstreetsports.com
+asterials.com
+serromi.com
+licensedtocharm.com
+absolutelydesi.com
+theallycatwalk.com
+zulily.com
+petsmont.com
+frame-store.com
+armazemquintino.com
+wildhorseboutique.com
+silvertreejewelry.co.za
+axpoutlet.com
+amandapearl.com
+shtepiaideale.al
+pinarca.com
+eu.thefrankieshop.com
+jeanvintage.co.uk
+carolinegardner.com
