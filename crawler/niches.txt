@@ -1,15 +1,44 @@
 # One search per line:  query | country code (2 letters, optional, default us)
 # Each run picks a few of these at random and a random results page, so it keeps finding new stores.
-# Edit these to match the kind of stores you want to reach.
-"powered by Shopify" women's boutique clothing | us
-"powered by Shopify" women's boutique clothing | uk
+# Focus: small independent stores with repeat-purchase products, where email flows and a better site make a difference.
+
+# Skincare, beauty and wellness (high repeat purchase)
 "powered by Shopify" skincare brand | us
 "powered by Shopify" skincare brand | ca
-"powered by Shopify" handmade jewelry | us
-"powered by Shopify" vintage clothing | uk
-"powered by Shopify" streetwear | au
-inurl:/collections/ candles gifts | us
+"powered by Shopify" natural skincare small batch | uk
+"powered by Shopify" hair care products | us
+"powered by Shopify" organic supplements | us
+"powered by Shopify" herbal tea wellness | uk
+
+# Food and drink (consumables, subscriptions)
+"powered by Shopify" specialty coffee roaster | us
+"powered by Shopify" hot sauce gourmet food | us
+"powered by Shopify" artisan chocolate | uk
+inurl:/collections/ loose leaf tea | ca
+
+# Pets (loyal, recurring buyers)
+"powered by Shopify" dog treats natural | us
 inurl:/collections/ pet accessories | us
+inurl:/collections/ cat toys | au
+
+# Home and gifts (seasonal campaigns, Q4 and holidays)
+inurl:/collections/ candles gifts | us
+"powered by Shopify" soy candles handmade | uk
 inurl:/collections/ home decor | uk
+"powered by Shopify" handmade jewelry | us
+"powered by Shopify" personalized gifts | ca
+
+# Fashion (big on newsletters, launches and sales)
+"powered by Shopify" women's boutique clothing | us
+"powered by Shopify" women's boutique clothing | uk
+"powered by Shopify" modest fashion | uk
+"powered by Shopify" streetwear | au
 inurl:/collections/ activewear | ca
 inurl:/collections/ baby clothes | au
+
+# WordPress / WooCommerce stores (web design + email pitch)
+"powered by WooCommerce" handmade | us
+"powered by WooCommerce" organic skincare | uk
+"powered by WooCommerce" boutique clothing | ca
+inurl:/product-category/ candles | us
+inurl:/product-category/ pet | au
