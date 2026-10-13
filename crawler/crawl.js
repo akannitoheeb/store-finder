@@ -18,7 +18,9 @@ if (!SB_KEY.startsWith('sb_')) sbHeaders.Authorization = 'Bearer ' + SB_KEY;
 const COUNTRIES = {
   us: 'United States', gb: 'United Kingdom', uk: 'United Kingdom', ca: 'Canada', au: 'Australia',
   ng: 'Nigeria', gh: 'Ghana', ke: 'Kenya', za: 'South Africa', in: 'India', nz: 'New Zealand',
-  ie: 'Ireland', de: 'Germany', fr: 'France', es: 'Spain', it: 'Italy', nl: 'Netherlands', ae: 'United Arab Emirates',
+  tr: 'Turkey', al: 'Albania', se: 'Sweden', no: 'Norway', dk: 'Denmark', pl: 'Poland', pt: 'Portugal',
+  br: 'Brazil', mx: 'Mexico', sg: 'Singapore', my: 'Malaysia', ph: 'Philippines', jp: 'Japan', kr: 'South Korea',
+  sa: 'Saudi Arabia', eg: 'Egypt', ie: 'Ireland', de: 'Germany', fr: 'France', es: 'Spain', it: 'Italy', nl: 'Netherlands', ae: 'United Arab Emirates',
 };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -64,7 +66,7 @@ function detectPlatform(html) {
   return null;
 }
 
-const BAD_EMAIL = /(\.(png|jpe?g|gif|webp|svg|css|js)$)|sentry|wixpress|example\.|yourdomain|domain\.com|shopify\.com|godaddy|email\.com|@2x/i;
+const BAD_EMAIL = /(\.(png|jpe?g|gif|webp|svg|css|js)$)|sentry|wixpress|example\.|yourdomain|domain\.com|shopify\.com|godaddy|email\.com|@2x|eposta\.com|powerfulform|^(ornek|name|user|username|test|sample|email|you|your|john|jane)@/i;
 function findEmails(html) {
   const decoded = html.replace(/&#64;|&commat;|\[at\]/gi, '@');
   const found = decoded.match(/[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}/gi) || [];
@@ -118,12 +120,23 @@ async function crawl(domain, isNew) {
   };
   const country = guessCountry(domain, home);
   if (country) row.country = country;
-  const emails = findEmails(all); if (emails.length) row.emails = emails;
+  // Keep emails on the store's own domain; fall back to free-mail (gmail etc). Drops app-vendor emails.
+  const parts = domain.split('.').filter((p) => p.length > 2 && !['www', 'com', 'org', 'net', 'shop', 'store'].includes(p));
+  const label = parts.sort((a, b) => b.length - a.length)[0] || domain;
+  const found = findEmails(all);
+  const own = found.filter((e) => e.split('@')[1].includes(label));
+  const free = found.filter((e) => /@(gmail|yahoo|outlook|hotmail|icloud|proton|protonmail)\./.test(e));
+  const emails = own.length ? own : free;
+  if (emails.length) row.emails = emails;
   const phones = findPhones(all); if (phones.length) row.phones = phones;
   Object.assign(row, findSocials(all));
   if (isNew) row.source = 'crawler';
 
   if (platform === 'Shopify') {
+    try {
+      const m = JSON.parse(await get(`https://${domain}/meta.json`, 8000));
+      if (m.country) row.country = COUNTRIES[String(m.country).toLowerCase()] || m.country;
+    } catch (e) { /* meta.json not public, keep the domain-based guess */ }
     const json = await get(`https://${domain}/products.json?limit=250`, 10000);
     try {
       const products = JSON.parse(json).products || [];
