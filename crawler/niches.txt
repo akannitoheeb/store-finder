@@ -42,3 +42,21 @@ inurl:/collections/ baby clothes | au
 "powered by WooCommerce" boutique clothing | ca
 inurl:/product-category/ candles | us
 inurl:/product-category/ pet | au
+
+# WooCommerce / WordPress
+inurl:/product-category/ soy candles handmade | us
+inurl:/product-category/ organic skincare small batch | uk
+inurl:/product-category/ dog treats natural | ca
+inurl:/product-category/ herbal tea wellness | au
+"proudly powered by WordPress" "add to cart" handmade jewelry | us
+"proudly powered by WordPress" "add to cart" boutique clothing | ca
+
+# Wix
+inurl:/product-page/ handmade gifts personalized | us
+inurl:/product-page/ natural skincare | uk
+inurl:/product-page/ boutique clothing | au
+inurl:/product-page/ candles home fragrance | ca
+
+# PrestaShop
+"Powered by PrestaShop" fashion boutique | uk
+"Powered by PrestaShop" home decor | ie
