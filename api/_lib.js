@@ -22,6 +22,7 @@ function buildFilters(q) {
   if (q.klaviyo === '1') p.set('uses_klaviyo', 'eq.true');
   if (q.klaviyo === '0') p.set('uses_klaviyo', 'eq.false');
   if (q.ads === '1') p.set('running_meta_ads', 'eq.true');
+  if (q.pixel === '1') p.set('has_meta_pixel', 'eq.true');
   if (q.active === '1') p.set('is_active', 'eq.true');
   return p;
 }
