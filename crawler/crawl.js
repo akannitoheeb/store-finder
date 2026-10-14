@@ -20,7 +20,10 @@ const COUNTRIES = {
   ng: 'Nigeria', gh: 'Ghana', ke: 'Kenya', za: 'South Africa', in: 'India', nz: 'New Zealand',
   tr: 'Turkey', al: 'Albania', se: 'Sweden', no: 'Norway', dk: 'Denmark', pl: 'Poland', pt: 'Portugal',
   br: 'Brazil', mx: 'Mexico', sg: 'Singapore', my: 'Malaysia', ph: 'Philippines', jp: 'Japan', kr: 'South Korea',
-  sa: 'Saudi Arabia', eg: 'Egypt', ie: 'Ireland', de: 'Germany', fr: 'France', es: 'Spain', it: 'Italy', nl: 'Netherlands', ae: 'United Arab Emirates',
+  sa: 'Saudi Arabia', eg: 'Egypt', hk: 'Hong Kong', cn: 'China', tw: 'Taiwan', th: 'Thailand', vn: 'Vietnam',
+  id: 'Indonesia', ar: 'Argentina', cl: 'Chile', co: 'Colombia', pk: 'Pakistan', bd: 'Bangladesh', lk: 'Sri Lanka',
+  ru: 'Russia', ua: 'Ukraine', ch: 'Switzerland', at: 'Austria', be: 'Belgium', fi: 'Finland', gr: 'Greece',
+  cz: 'Czechia', ro: 'Romania', hu: 'Hungary', il: 'Israel', qa: 'Qatar', kw: 'Kuwait', tz: 'Tanzania', ug: 'Uganda', ie: 'Ireland', de: 'Germany', fr: 'France', es: 'Spain', it: 'Italy', nl: 'Netherlands', ae: 'United Arab Emirates',
 };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -117,6 +120,7 @@ async function crawl(domain, isNew) {
     domain, platform,
     uses_klaviyo: /klaviyo\.com/i.test(all),
     is_active: true,
+    has_meta_pixel: /fbevents\.js|fbq\(|connect\.facebook\.net/i.test(all),
     last_crawled: new Date().toISOString(),
   };
   const country = guessCountry(domain, home);
