@@ -68,7 +68,7 @@
     <label class="check"><input type="checkbox" id="has_email"> Has email</label>
     <label class="check"><input type="checkbox" id="has_phone"> Has phone</label>
     <label class="check"><input type="checkbox" id="has_instagram"> Has Instagram</label>
-    <label class="check"><input type="checkbox" id="ads"> Running Meta ads</label>
+    <label class="check"><input type="checkbox" id="pixel"> Has Meta Pixel (likely runs ads)</label>
     <label class="check"><input type="checkbox" id="active"> Active stores only</label>
     <div class="actions">
       <button id="search">Search</button>
@@ -130,7 +130,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 function params() {
   const p = new URLSearchParams();
   ['q', 'platform', 'country', 'category', 'klaviyo'].forEach((id) => { if ($(id).value.trim()) p.set(id, $(id).value.trim()); });
-  ['has_email', 'has_phone', 'has_instagram', 'ads', 'active'].forEach((id) => { if ($(id).checked) p.set(id, '1'); });
+  ['has_email', 'has_phone', 'has_instagram', 'pixel', 'active'].forEach((id) => { if ($(id).checked) p.set(id, '1'); });
   return p;
 }
 
@@ -172,7 +172,7 @@ function render({ rows, count, limit }) {
       ...(s.phones || []).slice(0, 1).map(esc),
       s.instagram ? '<a href="' + esc(s.instagram) + '" target="_blank" rel="noopener">Instagram</a>' : '',
     ].filter(Boolean).join('<br>') || '<span class="muted">None found</span>';
-    const signals = (s.uses_klaviyo ? '<span class="tag">Klaviyo</span>' : '') + (s.running_meta_ads ? '<span class="tag">Meta ads</span>' : '');
+    const signals = (s.uses_klaviyo ? '<span class="tag">Klaviyo</span>' : '') + (s.has_meta_pixel ? '<span class="tag">Meta Pixel</span>' : '');
     return '<tr><td><a href="https://' + esc(s.domain) + '" target="_blank" rel="noopener">' + esc(s.domain) + '</a></td>'
       + '<td>' + esc(s.platform) + '</td><td>' + esc(s.country) + '</td><td>' + esc(s.category) + '</td>'
       + '<td>' + contact + '</td><td>' + signals + '</td>'
