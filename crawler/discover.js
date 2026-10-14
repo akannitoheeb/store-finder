@@ -5,7 +5,7 @@ const path = require('path');
 const SB_URL = process.env.SUPABASE_URL;
 const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
 const SERPER_KEY = process.env.SERPER_API_KEY;
-const MAX_SEARCHES = parseInt(process.env.DISCOVER_MAX_SEARCHES) || 10; // Serper credits used per run
+const MAX_SEARCHES = parseInt(process.env.DISCOVER_MAX_SEARCHES) || 05; // Serper credits used per run
 
 if (!SB_URL || !SB_KEY || !SERPER_KEY) { console.error('Missing SUPABASE_URL, SUPABASE_SERVICE_KEY or SERPER_API_KEY.'); process.exit(1); }
 
