@@ -2,7 +2,7 @@ name: Crawl stores
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: '0 */12 * * *'
   workflow_dispatch:
 
 jobs:
@@ -21,7 +21,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
-          DISCOVER_MAX_SEARCHES: 10
+          DISCOVER_MAX_SEARCHES: 5
       - name: Crawl stores
         run: node crawler/crawl.js
         env:
