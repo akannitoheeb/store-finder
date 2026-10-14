@@ -52,11 +52,12 @@
   .results { padding:16px; min-width:0; }
   .bar { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px; }
   .scroll { overflow-x:auto; }
-  table { width:100%; border-collapse:collapse; min-width:760px; }
-  th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; font-size:14px; }
+  table { width:100%; border-collapse:collapse; min-width:820px; table-layout:fixed; }
+  th, td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:middle; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  th:nth-child(1) { width:22%; } th:nth-child(2) { width:11%; } th:nth-child(3) { width:13%; } th:nth-child(4) { width:15%; } th:nth-child(5) { width:27%; } th:nth-child(6) { width:8%; } th:nth-child(7) { width:4%; }
   th { color:var(--muted); font-weight:500; }
   td a { color:var(--accent); text-decoration:none; font-weight:500; }
-  .tag { display:inline-block; padding:1px 8px; border-radius:99px; background:var(--hi); color:var(--accent); font-size:12px; margin:0 4px 4px 0; }
+  .tag { display:inline-block; padding:1px 8px; border-radius:99px; background:var(--hi); color:var(--accent); font-size:11px; margin:0 4px 0 0; }
   .muted { color:var(--muted); }
   .msg { padding:24px 8px; color:var(--muted); }
   .msg.error { color:var(--warn); }
@@ -254,11 +255,10 @@ function render({ rows, count, limit }) {
   if (!rows.length) { setMsg('No stores match these filters. Remove a filter or add more stores.'); return; }
   setMsg('');
   $('rows').innerHTML = rows.map((s) => {
-    const contact = [
-      ...(s.emails || []).slice(0, 2).map(esc),
-      ...(s.phones || []).slice(0, 1).map(esc),
-      s.instagram ? '<a href="' + esc(s.instagram) + '" target="_blank" rel="noopener">Instagram</a>' : '',
-    ].filter(Boolean).join('<br>') || '<span class="muted">None found</span>';
+    const emails = s.emails || [];
+    const contact = (emails.length ? '<span title="' + esc(emails.join(', ')) + '">' + esc(emails[0]) + '</span>' + (emails.length > 1 ? ' <span class="tag">+' + (emails.length - 1) + '</span>' : '') : '<span class="muted">No email</span>')
+      + ((s.phones || []).length ? ' <span class="tag" title="' + esc(s.phones.join(', ')) + '">Phone</span>' : '')
+      + (s.instagram ? ' <a href="' + esc(s.instagram) + '" target="_blank" rel="noopener">IG</a>' : '');
     const signals = (s.uses_klaviyo ? '<span class="tag">Klaviyo</span>' : '') + (s.has_meta_pixel ? '<span class="tag">Meta Pixel</span>' : '');
     return '<tr><td><a href="https://' + esc(s.domain) + '" target="_blank" rel="noopener">' + esc(s.domain) + '</a></td>'
       + '<td>' + esc(s.platform) + '</td><td>' + esc(s.country) + '</td><td>' + esc(s.category) + '</td>'
