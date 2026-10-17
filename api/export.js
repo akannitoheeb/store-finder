@@ -2,7 +2,7 @@ const { authorized, fetchStores } = require('./_lib');
 
 const MAX_ROWS = 10000; // keeps the export inside Vercel's function time limit
 const COLUMNS = [
-  'domain', 'platform', 'country', 'category', 'emails', 'phones',
+  'domain', 'site_name', 'title', 'description', 'platform', 'country', 'category', 'emails', 'phones',
   'instagram', 'facebook', 'tiktok', 'uses_klaviyo', 'running_meta_ads',
   'product_count', 'source', 'last_crawled',
 ];
