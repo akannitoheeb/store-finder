@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#eef2f4; --panel:#fff; --field:#fff; --ink:#14202b; --muted:#5b6b78; --line:#d5dde3; --accent:#0f766e; --on:#fff; --head:#14202b; --hi:#e2f1ef; --warn:#b42318; }
-  :root[data-theme=dark] { --bg:#0d1317; --panel:#151d23; --field:#0f161b; --ink:#e6edf1; --muted:#93a4af; --line:#2a3640; --accent:#2dd4bf; --on:#06201d; --head:#0a0f12; --hi:#123a36; --warn:#ff8a7e; }
+  :root { --bg:#eef2f4; --panel:#fff; --field:#fff; --ink:#14202b; --muted:#5b6b78; --line:#d5dde3; --accent:#0f766e; --on:#fff; --head:#14202b; --hi:#e2f1ef; --warn:#b42318; --aud:#e4f4e8; }
+  :root[data-theme=dark] { --bg:#0d1317; --panel:#151d23; --field:#0f161b; --ink:#e6edf1; --muted:#93a4af; --line:#2a3640; --accent:#2dd4bf; --on:#06201d; --head:#0a0f12; --hi:#123a36; --warn:#ff8a7e; --aud:#14301f; }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 "IBM Plex Sans", system-ui, sans-serif; }
   header { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 20px; background:var(--head); color:#fff; }
@@ -52,9 +52,9 @@
   .results { padding:16px; min-width:0; }
   .bar { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px; }
   .scroll { overflow-x:auto; }
-  table { width:100%; border-collapse:collapse; min-width:820px; table-layout:fixed; }
+  table { width:100%; border-collapse:collapse; min-width:760px; table-layout:fixed; }
   th, td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:middle; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  th:nth-child(1) { width:22%; } th:nth-child(2) { width:11%; } th:nth-child(3) { width:13%; } th:nth-child(4) { width:15%; } th:nth-child(5) { width:27%; } th:nth-child(6) { width:8%; } th:nth-child(7) { width:4%; }
+  th:nth-child(1) { width:29%; } th:nth-child(2) { width:12%; } th:nth-child(3) { width:15%; } th:nth-child(4) { width:17%; } th:nth-child(5) { width:13%; } th:nth-child(6) { width:14%; }
   th { color:var(--muted); font-weight:500; }
   td a { color:var(--accent); text-decoration:none; font-weight:500; }
   .tag { display:inline-block; padding:1px 8px; border-radius:99px; background:var(--hi); color:var(--accent); font-size:11px; margin:0 4px 0 0; }
@@ -62,6 +62,38 @@
   .msg { padding:24px 8px; color:var(--muted); }
   .msg.error { color:var(--warn); }
   .pager { display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:12px; }
+  /* store name, eye and audit buttons */
+  .dom { background:none; border:0; padding:0; color:var(--accent); font:inherit; font-weight:500; cursor:pointer; text-align:left; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dom:hover { text-decoration:underline; }
+  .acts { display:flex; gap:6px; align-items:center; }
+  .ibtn { width:32px; height:32px; padding:0; display:grid; place-items:center; background:transparent; color:var(--accent); border:1px solid var(--line); flex:none; }
+  .ibtn svg { width:17px; height:17px; }
+  a.abtn { display:inline-block; padding:5px 10px; border:1px solid var(--accent); border-radius:6px; color:var(--accent); font-size:12px; font-weight:600; text-decoration:none; white-space:nowrap; flex:none; }
+  tr.aud td { background:var(--aud); }
+  tr.aud a.abtn { background:var(--accent); color:var(--on); }
+  /* popup */
+  .ov { position:fixed; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:flex-start; justify-content:center; padding:6vh 12px; overflow:auto; z-index:50; }
+  .mod { background:var(--panel); color:var(--ink); border:1px solid var(--line); border-radius:12px; width:100%; max-width:640px; box-shadow:0 20px 60px rgba(0,0,0,.35); }
+  .mh { display:flex; justify-content:space-between; gap:10px; padding:18px 20px 12px; }
+  .mh h2 { margin:0; font-size:20px; font-weight:600; word-break:break-all; }
+  .mh .nav { display:flex; gap:4px; flex:none; }
+  .mh .nav button { width:34px; height:34px; padding:0; display:grid; place-items:center; background:transparent; color:var(--ink); border:1px solid var(--line); }
+  .mh .nav svg { width:16px; height:16px; }
+  .mstat { padding:0 20px 14px; color:var(--muted); font-size:14px; display:flex; flex-wrap:wrap; gap:6px 16px; align-items:center; }
+  .mstat b { color:var(--ink); }
+  .mtabs { display:flex; border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:0 12px; overflow-x:auto; }
+  .mtabs button { border:0; border-radius:0; background:none; color:var(--muted); padding:11px 10px; white-space:nowrap; }
+  .mtabs button.on { color:var(--ink); box-shadow:inset 0 -2px 0 var(--accent); font-weight:600; }
+  .mb { padding:6px 20px 14px; }
+  .kv { display:grid; grid-template-columns:130px 1fr; gap:8px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .kv span { color:var(--muted); }
+  .kv b { font-weight:500; word-break:break-word; }
+  .kv a { color:var(--accent); }
+  .li { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:6px 0; }
+  .li button { padding:3px 10px; font-size:12px; }
+  .mf { display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding:14px 20px 18px; border-top:1px solid var(--line); }
+  .mf a.abtn { padding:8px 14px; font-size:14px; }
+  .mf .note { color:var(--muted); font-size:13px; flex:1; min-width:120px; }
   [hidden] { display:none !important; }
   @media (max-width:820px) { main { grid-template-columns:1fr; padding:12px; } header input { width:110px; } }
 </style>
@@ -122,11 +154,12 @@
   <section class="results">
     <div class="bar">
       <strong id="count">No search yet</strong>
+      <label class="check" style="margin:0"><input type="checkbox" id="hideAud"> Hide audited stores</label>
       <button id="export" class="ghost" type="button" disabled>Export CSV</button>
     </div>
     <div class="scroll">
       <table>
-        <thead><tr><th>Store</th><th>Platform</th><th>Country</th><th>Category</th><th>Contact</th><th>Signals</th><th></th></tr></thead>
+        <thead><tr><th>Store</th><th>Platform</th><th>Country</th><th>Category</th><th>Signals</th><th></th></tr></thead>
         <tbody id="rows"></tbody>
       </table>
     </div>
@@ -138,6 +171,8 @@
     </div>
   </section>
 </main>
+
+<div class="ov" id="ov" hidden role="dialog" aria-modal="true" aria-label="Store details"><div class="mod" id="mod"></div></div>
 
 <script>
 // IMPORTANT: keep your real site-audit address here. The domain is added to the end.
@@ -246,26 +281,125 @@ async function run(goTo) {
     if (!ms.platform.items.length) loadFilters();
   } catch (e) { setMsg(e.message, true); }
 }
-function render({ rows, count, limit }) {
-  const pages = Math.max(1, Math.ceil(count / limit));
-  $('count').textContent = count.toLocaleString() + ' stores found';
-  $('export').disabled = count === 0;
+/* ---------- audited stores (remembered on this device) ---------- */
+const dkey = (d) => String(d || '').toLowerCase().replace(/^www\./, '');
+function audMap() { try { return JSON.parse(localStorage.getItem('sf_audited') || '{}'); } catch (e) { return {}; } }
+const audAt = (d) => audMap()[dkey(d)] || 0;
+const isAud = (d) => Boolean(audAt(d));
+function saveAud(m) { try { localStorage.setItem('sf_audited', JSON.stringify(m)); } catch (e) {} }
+function paintAud() {
+  document.querySelectorAll('#rows tr').forEach((tr) => {
+    const on = isAud(tr.dataset.d);
+    tr.classList.toggle('aud', on);
+    const a = tr.querySelector('a.abtn'); if (a) a.innerHTML = on ? 'Audited &#10003;' : 'Audit';
+  });
+  if (!$('ov').hidden) drawM();
+}
+function markAud(d) { const m = audMap(); if (!m[dkey(d)]) { m[dkey(d)] = Date.now(); saveAud(m); } paintAud(); }
+function clearAud(d) { const m = audMap(); delete m[dkey(d)]; saveAud(m); paintAud(); }
+
+/* ---------- results ---------- */
+const EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const auditHref = (d) => AUDIT_URL + encodeURIComponent(d);
+let LAST = { rows: [], count: 0, limit: 30 }, ROWS = [], cur = -1, tab = 'ov', lastFocus = null;
+
+function render(d) {
+  LAST = d;
+  const pages = Math.max(1, Math.ceil(d.count / d.limit));
+  $('export').disabled = d.count === 0;
   $('page').textContent = 'Page ' + page + ' of ' + pages;
   $('prev').disabled = page <= 1; $('next').disabled = page >= pages;
-  if (!rows.length) { setMsg('No stores match these filters. Remove a filter or add more stores.'); return; }
+  drawRows();
+}
+function drawRows() {
+  const hide = $('hideAud').checked;
+  ROWS = LAST.rows.filter((s) => !(hide && isAud(s.domain)));
+  const hidden = LAST.rows.length - ROWS.length;
+  $('count').textContent = LAST.count.toLocaleString() + ' stores found' + (hidden ? ' (' + hidden + ' audited hidden)' : '');
+  if (!LAST.rows.length) { $('rows').innerHTML = ''; setMsg('No stores match these filters. Remove a filter or add more stores.'); return; }
+  if (!ROWS.length) { $('rows').innerHTML = ''; setMsg('Every store on this page is already audited. Try the next page.'); return; }
   setMsg('');
-  $('rows').innerHTML = rows.map((s) => {
-    const emails = s.emails || [];
-    const contact = (emails.length ? '<span title="' + esc(emails.join(', ')) + '">' + esc(emails[0]) + '</span>' + (emails.length > 1 ? ' <span class="tag">+' + (emails.length - 1) + '</span>' : '') : '<span class="muted">No email</span>')
-      + ((s.phones || []).length ? ' <span class="tag" title="' + esc(s.phones.join(', ')) + '">Phone</span>' : '')
-      + (s.instagram ? ' <a href="' + esc(s.instagram) + '" target="_blank" rel="noopener">IG</a>' : '');
+  $('rows').innerHTML = ROWS.map((s, i) => {
+    const on = isAud(s.domain);
     const signals = (s.uses_klaviyo ? '<span class="tag">Klaviyo</span>' : '') + (s.has_meta_pixel ? '<span class="tag">Meta Pixel</span>' : '');
-    return '<tr><td><a href="https://' + esc(s.domain) + '" target="_blank" rel="noopener">' + esc(s.domain) + '</a></td>'
+    return '<tr class="' + (on ? 'aud' : '') + '" data-d="' + esc(s.domain) + '">'
+      + '<td><button type="button" class="dom" data-i="' + i + '" title="' + esc(s.domain) + '">' + esc(s.domain) + '</button></td>'
       + '<td>' + esc(s.platform) + '</td><td>' + esc(s.country) + '</td><td>' + esc(s.category) + '</td>'
-      + '<td>' + contact + '</td><td>' + signals + '</td>'
-      + '<td><a href="' + AUDIT_URL + encodeURIComponent(s.domain) + '" target="_blank" rel="noopener">Audit</a></td></tr>';
+      + '<td>' + signals + '</td>'
+      + '<td><div class="acts"><button type="button" class="ibtn" data-i="' + i + '" aria-label="View details for ' + esc(s.domain) + '" title="View details">' + EYE + '</button>'
+      + '<a class="abtn" data-d="' + esc(s.domain) + '" href="' + AUDIT_URL + encodeURIComponent(s.domain) + '" target="_blank" rel="noopener">' + (on ? 'Audited &#10003;' : 'Audit') + '</a></div></td></tr>';
   }).join('');
 }
+$('hideAud').onchange = drawRows;
+$('rows').addEventListener('click', (e) => {
+  const o = e.target.closest('[data-i]');
+  if (o) { lastFocus = o; openM(+o.dataset.i); return; }
+  const a = e.target.closest('a.abtn'); if (a) markAud(a.dataset.d);
+});
+
+/* ---------- popup ---------- */
+const fmt = (d) => d ? new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+const kv = (k, v) => '<div class="kv"><span>' + esc(k) + '</span><b>' + (v ? esc(v) : '<span>Not found</span>') + '</b></div>';
+const li = (v) => '<div class="li"><span>' + esc(v) + '</span><button type="button" class="ghost" data-a="copy" data-v="' + esc(v) + '">Copy</button></div>';
+const CH = (d) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="' + d + '"/></svg>';
+function openM(i) { cur = i; tab = 'ov'; drawM(); $('ov').hidden = false; document.body.style.overflow = 'hidden'; const x = $('mod').querySelector('[data-a=x]'); if (x) x.focus(); }
+function closeM() { $('ov').hidden = true; document.body.style.overflow = ''; if (lastFocus) lastFocus.focus(); }
+function go(n) { const k = cur + n; if (k >= 0 && k < ROWS.length) { cur = k; tab = tab; drawM(); $('ov').scrollTop = 0; } }
+function drawM() {
+  const s = ROWS[cur]; if (!s) return;
+  const at = audAt(s.domain), emails = s.emails || [], phones = s.phones || [];
+  const socials = [['Instagram', s.instagram], ['Facebook', s.facebook], ['TikTok', s.tiktok]].filter((x) => x[1]);
+  let body = '';
+  if (tab === 'ov') {
+    body = kv('Platform', s.platform) + kv('Country', s.country) + kv('Category', s.category)
+      + kv('Products', s.product_count != null ? (s.product_count >= 250 ? '250+' : String(s.product_count)) : '')
+      + kv('Status', s.is_active === false ? 'Site not loading' : 'Active')
+      + kv('First seen', fmt(s.created_at)) + kv('Last checked', fmt(s.last_crawled));
+  } else if (tab === 'ct') {
+    body = '<div class="kv"><span>Emails</span><div>' + (emails.length ? emails.map(li).join('') : '<span class="muted">No email found</span>') + '</div></div>'
+      + '<div class="kv"><span>Phones</span><div>' + (phones.length ? phones.map(li).join('') : '<span class="muted">No phone found</span>') + '</div></div>'
+      + '<div class="kv"><span>Social</span><div>' + (socials.length ? socials.map((x) => '<div class="li"><a href="' + esc(x[1]) + '" target="_blank" rel="noopener">' + x[0] + '</a></div>').join('') : '<span class="muted">No social links found</span>') + '</div></div>';
+  } else {
+    body = kv('Klaviyo', s.uses_klaviyo ? 'Yes, already uses Klaviyo' : 'Not detected')
+      + kv('Meta Pixel', s.has_meta_pixel ? 'Yes, likely runs Meta ads' : 'Not detected');
+  }
+  const T = (id, label) => '<button type="button" data-a="tab" data-t="' + id + '" class="' + (tab === id ? 'on' : '') + '">' + label + '</button>';
+  $('mod').innerHTML =
+    '<div class="mh"><div><h2>' + esc(s.domain) + ' <button type="button" class="ghost" data-a="copy" data-v="' + esc(s.domain) + '" style="padding:2px 8px;font-size:12px;vertical-align:middle">Copy</button></h2>'
+    + '<span class="tag" style="margin-top:6px">' + esc(s.platform || 'Unknown platform') + '</span></div>'
+    + '<div class="nav"><button type="button" data-a="prev" aria-label="Previous store"' + (cur <= 0 ? ' disabled' : '') + '>' + CH('M18 15l-6-6-6 6') + '</button>'
+    + '<button type="button" data-a="next" aria-label="Next store"' + (cur >= ROWS.length - 1 ? ' disabled' : '') + '>' + CH('M6 9l6 6 6-6') + '</button>'
+    + '<button type="button" data-a="x" aria-label="Close">' + CH('M18 6L6 18M6 6l12 12') + '</button></div></div>'
+    + '<div class="mstat">' + (s.product_count != null ? '<span><b>' + (s.product_count >= 250 ? '250+' : s.product_count) + '</b> products</span>' : '')
+    + (s.country ? '<span>' + esc(s.country) + '</span>' : '') + (emails.length ? '<span><b>' + emails.length + '</b> email' + (emails.length > 1 ? 's' : '') + '</span>' : '') + '</div>'
+    + '<div class="mtabs">' + T('ov', 'Overview') + T('ct', 'Contact &amp; Social') + T('te', 'Tech') + '</div>'
+    + '<div class="mb">' + body + '</div>'
+    + '<div class="mf"><a class="abtn" data-d="' + esc(s.domain) + '" href="' + auditHref(s.domain) + '" target="_blank" rel="noopener">' + (at ? 'Audited &#10003; (open again)' : 'Audit this store') + '</a>'
+    + '<a class="abtn" style="background:transparent;color:var(--accent)" href="https://' + esc(s.domain) + '" target="_blank" rel="noopener">Visit site</a>'
+    + (at ? '<span class="note">Audited on ' + esc(fmt(at)) + '. <button type="button" class="ghost" data-a="clear" style="padding:2px 8px;font-size:12px">Clear mark</button></span>' : '') + '</div>';
+}
+$('mod').addEventListener('click', (e) => {
+  const au = e.target.closest('a.abtn'); if (au && au.dataset.d) { markAud(au.dataset.d); return; }
+  const b = e.target.closest('[data-a]'); if (!b) return;
+  const a = b.dataset.a;
+  if (a === 'x') closeM();
+  else if (a === 'prev') go(-1);
+  else if (a === 'next') go(1);
+  else if (a === 'tab') { tab = b.dataset.t; drawM(); }
+  else if (a === 'clear') clearAud(ROWS[cur].domain);
+  else if (a === 'copy') {
+    const t = b.textContent;
+    const done = () => { b.textContent = 'Copied'; setTimeout(() => { b.textContent = t; }, 1200); };
+    if (navigator.clipboard) navigator.clipboard.writeText(b.dataset.v).then(done, () => {}); else prompt('Copy this:', b.dataset.v);
+  }
+});
+$('ov').addEventListener('click', (e) => { if (e.target === $('ov')) closeM(); });
+document.addEventListener('keydown', (e) => {
+  if ($('ov').hidden) return;
+  if (e.key === 'Escape') closeM();
+  else if (e.key === 'ArrowLeft') go(-1);
+  else if (e.key === 'ArrowRight') go(1);
+});
 async function exportCsv() {
   $('export').disabled = true;
   try {
