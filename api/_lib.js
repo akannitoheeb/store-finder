@@ -33,7 +33,7 @@ function buildFilters(q) {
   if (!isNaN(min)) p.append('product_count', 'gte.' + min);
   if (!isNaN(max)) p.append('product_count', 'lte.' + max);
 
-  if (q.q) p.set('domain', 'ilike.*' + clean(q.q) + '*');
+  if (q.q) p.set('or', `(domain.ilike.*${clean(q.q)}*,site_name.ilike.*${clean(q.q)}*)`);
   if (q.has_email === '1') p.set('emails', 'neq.{}');
   if (q.has_phone === '1') p.set('phones', 'neq.{}');
   if (q.klaviyo === '1') p.set('uses_klaviyo', 'eq.true');
