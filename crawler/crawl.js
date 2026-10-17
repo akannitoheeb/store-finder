@@ -100,6 +100,52 @@ function guessCountry(domain, html) {
   return m && COUNTRIES[m[1].toLowerCase()] ? COUNTRIES[m[1].toLowerCase()] : null;
 }
 
+
+// ---- store details taken from the homepage we already download (no extra requests) ----
+const decode = (s) => String(s || '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'")
+  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n)).replace(/\s+/g, ' ').trim();
+
+function metaContent(html, attr, name) {
+  const tag = html.match(new RegExp('<meta[^>]*' + attr + '=["\']' + name + '["\'][^>]*>', 'i'));
+  if (!tag) return '';
+  const m = tag[0].match(/content=(?:"([^"]*)"|'([^']*)')/i);
+  return m ? decode(m[1] ?? m[2]) : '';
+}
+
+function pickName(title, domain) {
+  const label = domain.replace(/^www\./, '').split('.')[0];
+  const flat = (x) => x.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const parts = decode(title).split(/\s[|\-\u2013\u2014\u2022:]\s/).map((p) => p.trim()).filter(Boolean);
+  const match = parts.find((p) => flat(p) && (flat(label).includes(flat(p)) || flat(p).includes(flat(label))));
+  const generic = /^(home|homepage|welcome|shop|online store|official (web)?site)\b/i;
+  const name = match || (parts.length === 1 && parts[0].length <= 40 && !generic.test(parts[0]) ? parts[0] : '');
+  return name || label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function findInfo(html, domain) {
+  const title = decode((html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1]).slice(0, 200);
+  const description = (metaContent(html, 'name', 'description') || metaContent(html, 'property', 'og:description')).slice(0, 500);
+  const siteName = metaContent(html, 'property', 'og:site_name').slice(0, 80);
+  const language = ((html.match(/<html[^>]*\slang=["']([a-zA-Z-]{2,10})["']/i) || [])[1] || '').slice(0, 10);
+  return { title, description, language, site_name: siteName || pickName(title, domain) };
+}
+
+// Links to the store's own policy / info pages (Shipping, Returns, About ...)
+function findPages(html, domain) {
+  const KEYS = { shipping: /shipping|delivery/, returns: /return|refund/, about: /about/, faq: /faq/, terms: /terms/, privacy: /privacy/, contact: /contact/, wholesale: /wholesale/, affiliate: /affiliate|ambassador/ };
+  const host = domain.replace(/^www\./, '');
+  const out = {};
+  for (const m of html.matchAll(/href=["']([^"'#\s]+)["']/gi)) {
+    if (/^(mailto|tel|javascript):/i.test(m[1])) continue;
+    let u; try { u = new URL(m[1], `https://${domain}/`); } catch (e) { continue; }
+    if (u.hostname.replace(/^www\./, '') !== host) continue;
+    const p = u.pathname.toLowerCase();
+    if (/^\/(products|collections|cart|account|search)/.test(p) || p === '/') continue;
+    for (const k in KEYS) if (!out[k] && KEYS[k].test(p)) out[k] = u.origin + u.pathname;
+  }
+  return Object.keys(out).length ? out : null;
+}
+
 async function crawl(domain, isNew) {
   if (!(await allowed(domain))) return { skip: 'blocked by robots.txt' };
   const home = await get(`https://${domain}`);
@@ -136,12 +182,20 @@ async function crawl(domain, isNew) {
   else if (found.length) row.emails = []; // only vendor/junk emails found: clear any old ones
   const phones = findPhones(all); if (phones.length) row.phones = phones;
   Object.assign(row, findSocials(all));
+  Object.assign(row, findInfo(home, domain));
+  const pages = findPages(home, domain); if (pages) row.pages = pages;
   if (isNew) row.source = 'crawler';
 
   if (platform === 'Shopify') {
     try {
       const m = JSON.parse(await get(`https://${domain}/meta.json`, 8000));
       if (m.country) row.country = COUNTRIES[String(m.country).toLowerCase()] || m.country;
+      if (m.name) row.site_name = String(m.name).slice(0, 80);
+      if (m.description && !row.description) row.description = String(m.description).slice(0, 500);
+      if (m.currency) row.currency = String(m.currency).slice(0, 8);
+      if (m.primary_locale) row.language = String(m.primary_locale).slice(0, 10);
+      const loc = [m.city, m.province].filter(Boolean).join(', '); if (loc) row.location = loc.slice(0, 80);
+      if (Number.isFinite(Number(m.published_products_count))) row.total_products = Number(m.published_products_count);
     } catch (e) { /* meta.json not public, keep the domain-based guess */ }
     const json = await get(`https://${domain}/products.json?limit=250`, 10000);
     try {
@@ -175,10 +229,10 @@ async function save(row) {
 async function existingStores() {
   const map = new Map();
   for (let offset = 0; ; offset += 1000) {
-    const r = await fetch(`${SB_URL}/rest/v1/stores?select=domain,last_crawled&limit=1000&offset=${offset}`, { headers: sbHeaders });
+    const r = await fetch(`${SB_URL}/rest/v1/stores?select=domain,last_crawled,site_name,is_active&limit=1000&offset=${offset}`, { headers: sbHeaders });
     if (!r.ok) throw new Error('Could not read stores: ' + (await r.text()));
     const rows = await r.json();
-    rows.forEach((s) => map.set(s.domain, s.last_crawled));
+    rows.forEach((s) => map.set(s.domain, { last: s.last_crawled, name: s.site_name, active: s.is_active }));
     if (rows.length < 1000) break;
   }
   return map;
@@ -201,9 +255,11 @@ async function markDiscovered(domain, status) {
   const domains = [...new Set(file.split('\n').filter((l) => l.trim() && !l.trim().startsWith('#')).map(normalize))];
   const existing = await existingStores();
   const cutoff = Date.now() - RECRAWL_DAYS * 86400000;
-  const queue = domains.filter((d) => !existing.has(d) || new Date(existing.get(d)).getTime() < cutoff).slice(0, MAX_PER_RUN);
+  const queue = domains.filter((d) => !existing.has(d) || new Date(existing.get(d).last).getTime() < cutoff).slice(0, MAX_PER_RUN);
   const pending = new Set(await pendingDiscovered());
   for (const d of pending) if (queue.length < MAX_PER_RUN && !queue.includes(d)) queue.push(d);
+  // Stores saved before names existed: fill them in, a batch per run
+  for (const [d, v] of existing) if (queue.length < MAX_PER_RUN && !v.name && v.active !== false && !queue.includes(d)) queue.push(d);
   console.log(`${domains.length} domains listed, ${pending.size} discovered, ${queue.length} to crawl this run.`);
 
   let saved = 0, skipped = 0, failed = 0;
