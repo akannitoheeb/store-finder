@@ -76,16 +76,49 @@ function findEmails(html) {
   return [...new Set(found.map((e) => e.toLowerCase()).filter((e) => !BAD_EMAIL.test(e)))].slice(0, 5);
 }
 
+// Turns "(407) 621-4000" or "+1 407 621 4000" into "+14076214000". Returns null if it does not look like a real number.
+function normalizePhone(raw) {
+  let t = String(raw).replace(/\(0\)/g, '').trim();
+  try { t = decodeURIComponent(t); } catch (e) { /* keep as is */ }
+  const digits = t.replace(/\D/g, '');
+  if (t.startsWith('+') || t.startsWith('00')) {
+    const d = t.startsWith('+') ? digits : digits.slice(2);
+    return /^[1-9]\d{7,14}$/.test(d) ? '+' + d : null;
+  }
+  if (/^1?[2-9]\d{2}[2-9]\d{6}$/.test(digits)) return '+1' + digits.slice(-10); // US / Canada
+  return null; // local formats (0801...) need the store's country: the audit tool handles those
+}
+const junkPhone = (p) => { const t = p.replace(/\D/g, '').slice(-10); return /^(\d)\1+$/.test(t) || '01234567890123456789'.includes(t); };
+
 function findPhones(html) {
-  const found = [...html.matchAll(/href=["']tel:([+\d\s().-]{7,20})["']/gi)].map((m) => m[1].trim());
-  return [...new Set(found)].slice(0, 3);
+  const raw = [...html.matchAll(/href=["']tel:([^"']+)["']/gi)].map((m) => m[1]);
+  for (const m of html.matchAll(/(?:wa\.me\/|whatsapp\.com\/send\/?\?phone=)(\d{8,15})/gi)) raw.push('+' + m[1]);
+  for (const m of html.matchAll(/"telephone"\s*:\s*"([^"]+)"/gi)) raw.push(m[1]);
+  const out = [];
+  for (const r of raw) {
+    const n = normalizePhone(r);
+    if (n && !junkPhone(n) && !out.includes(n)) out.push(n);
+  }
+  return out.slice(0, 3);
 }
 
-function findSocials(html) {
+function findSocials(html, domain) {
   const out = {};
-  const BAD = /^(p|reel|reels|explore|accounts|sharer|share|tr|plugins|dialog|policies|login|intent|shopify|stories)$/i;
-  const ig = [...html.matchAll(/instagram\.com\/([A-Za-z0-9._]{2,30})/g)].map((m) => m[1]).find((h) => !BAD.test(h));
-  const fb = [...html.matchAll(/facebook\.com\/([A-Za-z0-9.\-]{3,})/g)].map((m) => m[1]).find((h) => !BAD.test(h) && h !== 'profile.php');
+  const BAD = /^(p|reels?|explore|accounts|sharer|sharer\.php|share|share\.php|tr|plugins|dialog|policies|login|intent|shopify|stories|direct|tv|about|legal|developer|instagram|facebook|meta|home|profile\.php)$/i;
+  const flat = (x) => x.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const label = flat(String(domain || '').replace(/^www\./, '').split('.')[0]);
+  // Among all handles on the page, prefer the one that looks like the store's own name (not a theme author or app)
+  const pick = (re, min) => {
+    const seen = [];
+    for (const m of html.matchAll(re)) {
+      const h = m[1].replace(/\.$/, '');
+      if (BAD.test(h) || /\.(php|html?|png|jpe?g|gif|svg|js|css)$/i.test(h) || seen.includes(h)) continue;
+      seen.push(h);
+    }
+    return seen.find((h) => label.length > 2 && (flat(h).includes(label) || label.includes(flat(h)))) || seen[0];
+  };
+  const ig = pick(/instagram\.com\/([A-Za-z0-9._]{2,30})/gi);
+  const fb = pick(/facebook\.com\/([A-Za-z0-9.\-]{3,})/gi);
   const tt = html.match(/tiktok\.com\/@([A-Za-z0-9._]{2,30})/);
   if (ig) out.instagram = 'https://instagram.com/' + ig;
   if (fb) out.facebook = 'https://facebook.com/' + fb;
@@ -154,9 +187,14 @@ async function crawl(domain, isNew) {
   if (!platform) return { skip: 'not a recognised store platform' };
 
   // Contact page: use a link found on the homepage, otherwise try common paths
-  const link = home.match(/href=["']([^"']*contact[^"']*)["']/i);
   const candidates = [];
-  if (link) candidates.push(link[1].startsWith('http') ? link[1] : `https://${domain}${link[1].startsWith('/') ? '' : '/'}${link[1]}`);
+  for (const m of home.matchAll(/href=["']([^"'#\s]*contact[^"'#\s]*)["']/gi)) {
+    if (/^(mailto|tel|javascript|sms|whatsapp):/i.test(m[1])) continue; // "mailto:contact@..." is not a contact page
+    try {
+      const u = new URL(m[1], `https://${domain}/`);
+      if (u.hostname.replace(/^www\./, '') === domain.replace(/^www\./, '')) { candidates.push(u.href); break; }
+    } catch (e) { /* skip bad link */ }
+  }
   candidates.push(`https://${domain}/pages/contact`, `https://${domain}/contact`, `https://${domain}/contact-us`);
   let contact = '';
   for (const url of candidates) { contact = (await get(url, 8000)) || ''; if (contact) break; }
@@ -181,7 +219,7 @@ async function crawl(domain, isNew) {
   if (emails.length) row.emails = emails;
   else if (found.length) row.emails = []; // only vendor/junk emails found: clear any old ones
   const phones = findPhones(all); if (phones.length) row.phones = phones;
-  Object.assign(row, findSocials(all));
+  Object.assign(row, findSocials(all, domain));
   Object.assign(row, findInfo(home, domain));
   const pages = findPages(home, domain); if (pages) row.pages = pages;
   if (isNew) row.source = 'crawler';
