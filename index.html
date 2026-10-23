@@ -199,7 +199,7 @@ $('themeBtn').onclick = () => { dark = !dark; applyTheme(dark); try { localStora
 
 /* ---------- access key ---------- */
 try { keyInput.value = localStorage.getItem('sf_key') || ''; } catch (e) {}
-keyInput.addEventListener('change', () => { try { localStorage.setItem('sf_key', keyInput.value); } catch (e) {} loadFilters(); });
+keyInput.addEventListener('change', () => { try { localStorage.setItem('sf_key', keyInput.value); } catch (e) {} loadFilters(); loadAudited(); });
 
 /* ---------- collapsible sections ---------- */
 document.querySelectorAll('.gh').forEach((b) => b.onclick = () => b.parentElement.classList.toggle('open'));
@@ -287,7 +287,18 @@ async function run(goTo) {
 /* ---------- audited stores (remembered on this device) ---------- */
 const dkey = (d) => String(d || '').toLowerCase().replace(/^www\./, '');
 function audMap() { try { return JSON.parse(localStorage.getItem('sf_audited') || '{}'); } catch (e) { return {}; } }
-const audAt = (d) => audMap()[dkey(d)] || 0;
+let SYNCED = {}; // stores that the audit tool has really saved (shared across devices)
+const audAt = (d) => (SYNCED[dkey(d)] && SYNCED[dkey(d)].at) || audMap()[dkey(d)] || 0;
+async function loadAudited() {
+  if (!keyInput.value) return;
+  try {
+    const r = await fetch('/api/audited', { headers: { 'x-access-key': keyInput.value } });
+    if (!r.ok) return;
+    SYNCED = (await r.json()).audited || {};
+    paintAud();
+    if (LAST.rows.length) drawRows();
+  } catch (e) { /* offline: the marks kept on this device still work */ }
+}
 const isAud = (d) => Boolean(audAt(d));
 function saveAud(m) { try { localStorage.setItem('sf_audited', JSON.stringify(m)); } catch (e) {} }
 function paintAud() {
@@ -433,7 +444,10 @@ $('reset').onclick = () => {
 $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') run(1); });
 
 loadFilters();
+loadAudited();
 if (keyInput.value) run(1);
+// Coming back from the audit tab: refresh, so a store you just audited shows as audited
+document.addEventListener('visibilitychange', () => { if (!document.hidden) loadAudited(); });
 </script>
 </body>
 </html>
