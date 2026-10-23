@@ -3,13 +3,14 @@ const { authorized, fetchStores } = require('./_lib');
 const MAX_ROWS = 10000; // keeps the export inside Vercel's function time limit
 const COLUMNS = [
   'domain', 'site_name', 'title', 'description', 'platform', 'country', 'category', 'emails', 'phones',
-  'instagram', 'facebook', 'tiktok', 'uses_klaviyo', 'running_meta_ads',
-  'product_count', 'source', 'last_crawled',
+  'instagram', 'facebook', 'tiktok', 'uses_klaviyo', 'has_meta_pixel',
+  'product_count', 'total_products', 'location', 'currency', 'source', 'last_crawled',
 ];
 
 const cell = (v) => {
   if (v === null || v === undefined) return '';
-  const s = Array.isArray(v) ? v.join('; ') : String(v);
+  let s = Array.isArray(v) ? v.join('; ') : String(v);
+  if (/^[=+\-@]/.test(s)) s = "'" + s; // stops Excel / Sheets running a cell as a formula
   return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 };
 

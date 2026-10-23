@@ -2,9 +2,14 @@
 const SB_URL = process.env.SUPABASE_URL;
 const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
 
+const crypto = require('crypto');
 function authorized(req) {
   const key = process.env.ACCESS_KEY;
-  return Boolean(key) && req.headers['x-access-key'] === key;
+  const given = String(req.headers['x-access-key'] || '');
+  if (!key || !given) return false;
+  const a = crypto.createHash('sha256').update(key).digest();
+  const b = crypto.createHash('sha256').update(given).digest();
+  return crypto.timingSafeEqual(a, b); // constant time, so the key cannot be guessed from response timing
 }
 
 const clean = (v) => String(v || '').replace(/[*,()]/g, '').trim();
@@ -76,4 +81,4 @@ async function fetchColumns(select) {
   return out;
 }
 
-module.exports = { authorized, fetchStores, fetchColumns };
+module.exports = { authorized, fetchStores, fetchColumns, headers, SB_URL };
